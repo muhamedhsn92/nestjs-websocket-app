@@ -5,50 +5,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=x, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://unpkg.com/vue-simple-notify/dist/vue-simple-notify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
-    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script src="http://10.0.0.248:3000/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/vue-simple-notify/dist/vue-simple-notify.min.js"></script>
+
 </head>
 
 <body>
-    <div id="v-app">
-        <h2>{{ title }}</h2>
+    <main id="v-app">
+        <section class="alerts">
+            <alerts-component :items="alerts"></alerts-component>
+        </section>
+        <section class="chat">
+            <h2>{{ title }}</h2>
+            <form>
+                <input v-model="text" type="text">
+                <button type="submit" @click.prevent="sendChatMessage()">Send</button>
+            </form>
+            <ul>
+                <li v-for="msg of messages">
+                    <strong>{{msg.sender}}</strong> {{ msg.message }}
+                </li>
+            </ul>
+        </section>
 
-        <form>
-            <input v-model="text" type="text">
-            <button type="submit" @click.prevent="sendChatMessage()">Send</button>
-        </form>
-        <ul>
-            <li v-for="msg of messages">{{ msg }}</li>
-        </ul>
 
-    </div>
+    </main>
     <script>
+        Vue.component('alerts-component',  VueSimpleNotify.VueSimpleNotify);
         var app = new Vue({
             el: '#v-app',
             data: {
+                username: '',
                 title: 'hello Vue app - WebSocket-app',
                 text: '',
                 messages: [],
-                socket: { chat: null, alert: null }
+                socket: { chat: null, alerts: null },
+                alerts: [],
                 // messages: ['some messages', 'another messages']
             },
             methods: {
                 sendChatMessage() {
                     console.log(`send : ${this.text}`);
-                    this.socket.chat.emit('chatToServer', this.text);
+                    this.socket.chat.emit('chatToServer', { sender: this.username, message: this.text });
                     // this.socket.emit('messageToServer', this.text);
                     // this.messages.push(this.text);
                     this.text = '';
                 },
                 receiveChatMessage(msg) {
-                    console.log(`receive : ${msg}`);
+                    console.log(`receive : ${msg.sender}`);
                     this.messages.push(msg);
+                },
+                receiveAlertMessage(msg) {
+                    this.alerts.push(msg)
                 }
             },
             created() {
-                this.socket.chat = io('http://localhost:3000/chat');
+                this.username = prompt('Enter your username');
+                this.socket.chat = io('http://10.0.0.248:3000/chat');
                 this.socket.chat.on('chatToClient', (msg) => {
                     this.receiveChatMessage(msg);
+                })
+                this.socket.alerts = io('http://10.0.0.248:3000/alert');
+                this.socket.alerts.on('alertToClient', (msg) => {
+                    this.receiveAlertMessage(msg);
                 })
             }
         })
