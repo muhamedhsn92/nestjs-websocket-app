@@ -18,7 +18,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
   handleConnection(client: Socket, ...args: any[]) {
     this.logger.log(`client connected id ${client.id}`)
     // throw new Error('Method not implemented.');
-  }
+  }  
   @SubscribeMessage('messageToServer')
   handleMessage(client: Socket, text: string): void {
     this.wss.emit('msgToClient', text)

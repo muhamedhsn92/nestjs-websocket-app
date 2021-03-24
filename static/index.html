@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=x, initial-scale=1.0">
     <title>Document</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
 </head>
 
 <body>
@@ -15,7 +15,7 @@
 
         <form>
             <input v-model="text" type="text">
-            <button type="submit" @click.prevent="sendMessage()">Send</button>
+            <button type="submit" @click.prevent="sendChatMessage()">Send</button>
         </form>
         <ul>
             <li v-for="msg of messages">{{ msg }}</li>
@@ -28,24 +28,27 @@
             data: {
                 title: 'hello Vue app - WebSocket-app',
                 text: '',
-                messages: ['some messages', 'another messages']
+                messages: [],
+                socket: { chat: null, alert: null }
+                // messages: ['some messages', 'another messages']
             },
             methods: {
-                sendMessage() {
+                sendChatMessage() {
                     console.log(`send : ${this.text}`);
-                    this.socket.emit('messageToServer', this.text);
+                    this.socket.chat.emit('chatToServer', this.text);
+                    // this.socket.emit('messageToServer', this.text);
                     // this.messages.push(this.text);
                     this.text = '';
                 },
-                receiveMessage(msg) {
+                receiveChatMessage(msg) {
                     console.log(`receive : ${msg}`);
                     this.messages.push(msg);
                 }
             },
             created() {
-                this.socket = io('http://localhost:3000');
-                this.socket.on('msgToClient', (msg) => {
-                    this.receiveMessage(msg);
+                this.socket.chat = io('http://localhost:3000/chat');
+                this.socket.chat.on('chatToClient', (msg) => {
+                    this.receiveChatMessage(msg);
                 })
             }
         })
